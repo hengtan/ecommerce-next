@@ -24,10 +24,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 break;
 
             case 'POST':
-                // Criar cliente
                 const novoCliente = req.body as Partial<Cliente>;
-                const clienteCriado = await clienteRepo.create(novoCliente);
-                res.status(201).json(clienteCriado);
+                if (!novoCliente.email || !novoCliente.nome || !novoCliente.telefone) {
+                    return res.status(400).json({ message: 'Campos obrigatórios não preenchidos.' });
+                }
+
+                // Validar se o cliente já existe
+                const clienteExistente = await clienteRepo.findByEmail(novoCliente.email);
+                if (clienteExistente) {
+                    return res.status(400).json({ message: 'Cliente já cadastrado.' });
+                }
+
+                // Criar cliente se não existir
+                try {
+                    const clienteCriado = await clienteRepo.create(novoCliente);
+                    res.status(201).json(clienteCriado);
+                } catch (error) {
+                    console.error('Erro ao criar cliente:', error);
+                    res.status(500).json({ message: 'Erro ao cadastrar cliente. Tente novamente mais tarde.' });
+                }
                 break;
 
             case 'PUT':

@@ -4,8 +4,17 @@ import { supabase } from '@/infrastructure/supabaseClient';
 
 export class ClienteRepositorySupabase implements ClienteRepository {
     async create(cliente: Partial<Cliente>): Promise<Cliente> {
-        const { data, error } = await supabase.from('clientes').insert(cliente).select().single();
-        if (error) throw error;
+        const { data, error } = await supabase
+            .from('clientes')
+            .insert(cliente)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Erro ao inserir cliente no banco:', error.message);
+            throw new Error('Erro ao cadastrar cliente');
+        }
+
         return data as Cliente;
     }
 
@@ -13,6 +22,17 @@ export class ClienteRepositorySupabase implements ClienteRepository {
         const { data, error } = await supabase.from('clientes').select('*');
         if (error) throw error;
         return data as Cliente[];
+    }
+
+    async findByEmail(email: string): Promise<Cliente | null> {
+        const { data, error } = await supabase
+            .from('clientes')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (error) return null;
+        return data as Cliente;
     }
 
     async findById(id: number): Promise<Cliente | null> {
